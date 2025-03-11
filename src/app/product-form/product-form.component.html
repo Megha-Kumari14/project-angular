@@ -1,0 +1,81 @@
+<h2 class="text-center my-5">Add Product</h2>
+
+<div *ngIf="errorMessage != ''">
+    {{errorMessage}}
+</div>
+
+<form (ngSubmit)="onSubmit()" #productForm="ngForm" class="border rounded p-5 w-50 mb-5 mx-auto">
+
+    <div class="mb-3">
+        <label class="form-label">Name*</label>
+        <input required #Name =" ngModel" class= "form-control" type="text" name="Name" [(ngModel)]="Product.Name"/>
+
+        <div *ngIf="Name.invalid && (Name.touched || Name.dirty)">
+            <div class="text-danger" *ngIf="Name.errors?.['required']">Product Name is required.</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description*</label>
+        <input required #Description =" ngModel" class= "form-control" type="text" name="Description" [(ngModel)]="Product.Description"/>
+
+        <div *ngIf="Description.invalid && (Description.touched || Description.dirty)">
+            <div class="text-danger" *ngIf="Description.errors?.['required']">Description is required.</div>
+        </div>
+    
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">SKU*</label>
+        <input required #SKU =" ngModel" class= "form-control" type="text" name="SKU" [(ngModel)]="Product.SKU"/>
+    
+        <div *ngIf="SKU.invalid && (SKU.touched || SKU.dirty)">
+            <div class="text-danger" *ngIf="SKU.errors?.['required']">SKU is required.</div>
+        </div>
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">CategoryID*</label>
+        <input required #CategoryID =" ngModel" class= "form-control" type="number" name="CategoryID" [(ngModel)]="Product.CategoryID"/>
+    
+        <div *ngIf="CategoryID.invalid && (CategoryID.touched || CategoryID.dirty)">
+            <div class="text-danger" *ngIf="SKU.errors?.['required']">CategoryID is required.</div>
+        </div>
+    
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">StockQuantity*</label>
+        <input required #StockQuantity class= "form-control" type="number" name="StockQuantity" [(ngModel)]="Product.StockQuantity"/>
+    
+        <div *ngIf="StockQuantity.invalid && (StockQuantity.touched || StockQuantity.dirty)">
+            <div class="text-danger" *ngIf="StockQuantity.errors?.['required']">StockQuantity is required.</div>
+        </div>
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Price*</label>
+        <input required #Price class= "form-control" type="number" name="Price" [(ngModel)]="Product.Price"/>
+    
+        <div *ngIf="Price.invalid && (Price.touched || Price.dirty)">
+            <div class="text-danger" *ngIf="Price.errors?.['required']">Price is required.</div>
+        </div>
+    
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Currency*</label>
+        <input required #Currency class= "form-control" type="text" name="Currency" [(ngModel)]="Product.Currency"/>
+    
+        <div *ngIf="Currency.invalid && (Currency.touched || Currency.dirty)">
+            <div class="text-danger" *ngIf="Currency.errors?.['required']">Currency is required.</div>
+        </div>
+    
+    </div>
+
+    
+    
+    <button class="btn btn-primary" type="submit" [disabled]="productForm.invalid" (click)="onClick">Add</button>
+</form>
