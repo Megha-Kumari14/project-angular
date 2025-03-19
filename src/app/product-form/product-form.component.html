@@ -32,6 +32,8 @@
         <div *ngIf="SKU.invalid && (SKU.touched || SKU.dirty)">
             <div class="text-danger" *ngIf="SKU.errors?.['required']">SKU is required.</div>
         </div>
+        // <div *ngIf="skuExists" class="text-danger">SKU already exists. Please choose a different one.</div>
+  </div>
 
     </div>
 
