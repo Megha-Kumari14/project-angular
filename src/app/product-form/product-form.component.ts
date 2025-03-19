@@ -27,10 +27,34 @@ export class ProductFormComponent {
   errorMessage: string= "";
 
   constructor(private productService: ProductService, private router: Router){
+        // Watch SKU value changes
+    this.product.SKU = '';
 
   }
 
+  // Function to check SKU uniqueness
+  checkSku(sku: string) {
+    if (sku.length > 0) {
+      this.productService.checkSkuUnique(sku).subscribe(
+        () => {
+          this.skuExists = false;  // SKU is unique
+        },
+        (error) => {
+          if (error.status === 409) {
+            this.skuExists = true;  // SKU already exists
+          }
+        }
+      );
+    }
+  }
+
   onSubmit() : void {
+
+        // Prevent form submission if SKU is not unique
+    if (this.skuExists) {
+      this.errorMessage = 'The SKU already exists. Please choose a different one.';
+      return;
+    }
 
     //logic to add a product
     this.productService.addProduct(this.product)
