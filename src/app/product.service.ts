@@ -20,4 +20,8 @@ export class ProductService {
   addProduct(product: Product): Observable<Product>{
     return this.http.post<Product>(this.apiUrl, product);
   }
+
+   // New method to check SKU uniqueness
+  checkSkuUnique(sku: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/check-sku`, sku);
 }
