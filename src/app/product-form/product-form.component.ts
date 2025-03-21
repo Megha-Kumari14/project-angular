@@ -73,3 +73,109 @@ export class ProductFormComponent {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Product } from '../../../models/product';
+import { ProductService } from '../product.service';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { CategoryService } from '../category.service';
+import { Category } from '../../../models/category';
+
+@Component({
+  selector: 'app-product-form',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './product-form.component.html',
+  styleUrls: ['./product-form.component.css']
+})
+export class ProductFormComponent implements OnInit {
+
+  product: Product = {
+    productID: 0,
+    name: '',
+    description: '',
+    sku: '',
+    categoryID: 0,
+    stockQuantity: 0,
+    price: 0,
+    currency: '',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
+  categories: Category[] = [];  
+  errorMessage: string = "";
+
+  readonly currency = 'INR';
+
+  constructor(
+    private productService: ProductService,
+    private categoryService: CategoryService,  
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    
+    this.categoryService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+      },
+      error: (error) => {
+        console.error('Error fetching categories:', error);
+        this.errorMessage = 'Error fetching categories.';
+      }
+    });
+  }
+
+  onSubmit(): void {
+    this.errorMessage = '';  
+
+   
+    if (this.product.price <= 0) {
+      this.errorMessage = 'Price must be greater than zero.';
+      return;
+    }
+
+   
+    this.productService.addProduct(this.product).subscribe({
+      next: (response) => {
+        alert('Product added successfully!');
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = `Error occurred (${err.message})`;
+      }
+    });
+  }
+}
+
+
+
+
+
+
+
+
+
