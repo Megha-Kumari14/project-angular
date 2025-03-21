@@ -35,3 +35,67 @@
     </div>
 
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2 class="text-center my-5">Product List</h2>
+<div class="card">
+  <div class="card-header">
+    <p class="fs-6">Overview</p>
+    <button class="btn btn-primary float-end mb-3" (click)="onAddProduct()">Add Product</button>
+  </div>
+  <div class="card-body">
+    
+   
+    
+    
+    <table class="table table-hover" *ngIf="products.length > 0">
+      <thead>
+        <tr>
+          <th>ProductID</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>SKU</th>
+          <th>CategoryID</th>
+          <th>CategoryName</th> <!-- Display category name here -->
+          <th>StockQuantity</th>
+          <th>Price</th>
+          <th>Currency</th>
+          <th>CreatedAt</th>
+          <th>UpdatedAt</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let product of products">
+          <td>{{product?.productID}}</td>
+          <td>{{product.name}}</td>
+          <td>{{product.description}}</td>
+          <td>{{product.sku}}</td>
+          <td>{{ product.categoryID }}</td>
+          <td>{{getCategoryName(product.categoryID)}}</td> 
+          <td>{{product.stockQuantity}}</td>
+          <td>{{product.price}}</td>
+          <td>{{product.currency}}</td>
+          <td>{{product.createdAt}}</td>
+          <td>{{product.updatedAt}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
