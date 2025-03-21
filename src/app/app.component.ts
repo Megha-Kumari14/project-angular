@@ -15,3 +15,28 @@ import { RouterModule } from '@angular/router';
 export class AppComponent {
   title = 'product-catalog-app';
 }
+
+
+
+
+
+
+
+
+
+
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+//import { ProductTableComponent } from './product-table/product-table.component';
+import { RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet, RouterModule],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css'
+})
+export class AppComponent {
+  title = 'product-catalog-app';
+}
