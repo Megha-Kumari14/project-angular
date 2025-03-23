@@ -81,7 +81,8 @@ export class ProductFormComponent implements OnInit {
     if (!this.product.sku.trim()) return;
     this.productService.checkSKUExists(this.product.sku).subscribe({
       next: (exists) => {
-        if (exists) this.errorMessage = 'SKU already exists!';
+        this.skuError = exists ? 'SKU already exists!' : '';
+        //if (exists) this.skuError = 'SKU already exists!';
       },
       error: () => {
         this.skuError = 'Error checking SKU uniqueness.';
@@ -94,6 +95,8 @@ export class ProductFormComponent implements OnInit {
       this.errorMessage = 'Price must be greater than zero.';
       return;
     }
+
+    if (this.skuError) return; // Prevent submission if SKU error exists
     
     this.productService.addProduct(this.product).pipe(
       catchError((err) => {
