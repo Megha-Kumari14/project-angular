@@ -167,6 +167,6 @@
         </div>
     </div>
 
-    <button class="btn btn-primary" type="submit" [disabled]="productForm.invalid">Add</button>
+    <button class="btn btn-primary" type="submit" [disabled]="productForm.invalid || skuError">Add</button>
 </form>
 
