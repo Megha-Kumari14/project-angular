@@ -47,6 +47,7 @@ export class ProductFormComponent implements OnInit {
 
   categories: Category[] = [];
   errorMessage: string = "";
+  skuError: string = "";  // Separate SKU error field
   isLoading: boolean = false;
   
   constructor(
