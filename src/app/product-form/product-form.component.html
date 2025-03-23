@@ -77,3 +77,96 @@
 
     <button class="btn btn-primary" type="submit" [disabled]="productForm.invalid">Add</button>
 </form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2 class="text-center my-5">Add Product</h2>
+
+<div *ngIf="errorMessage !== ''" class="text-danger text-center">
+    {{ errorMessage }}
+</div>
+
+<form (ngSubmit)="onSubmit()" #productForm="ngForm" class="border rounded p-5 w-50 mb-5 mx-auto">
+    <div class="mb-3">
+        <label class="form-label">Name*</label>
+        <input required #Name="ngModel" class="form-control" type="text" name="Name" [(ngModel)]="product.name" maxlength="100"/>
+        <div *ngIf="Name.invalid && (Name.touched || Name.dirty)">
+            <div class="text-danger" *ngIf="Name.errors?.['required']">Product Name is required.</div>
+            <div class="text-danger" *ngIf="Name.errors?.['maxlength']">Product Name cannot exceed 100 characters.</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description*</label>
+        <input required #Description="ngModel" class="form-control" type="text" name="Description" [(ngModel)]="product.description"/>
+        <div *ngIf="Description.invalid && (Description.touched || Description.dirty)">
+            <div class="text-danger" *ngIf="Description.errors?.['required']">Description is required.</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">SKU*</label>
+        <input required #SKU="ngModel" class="form-control" type="text" name="SKU" [(ngModel)]="product.sku" (blur)="checkSKU()"/>
+        <div *ngIf="SKU.invalid && (SKU.touched || SKU.dirty)">
+            <div class="text-danger" *ngIf="SKU.errors?.['required']">SKU is required.</div>
+        </div>
+        <div *ngIf="skuError" class="text-danger">
+            {{ skuError }}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Category*</label>
+        <select required #CategoryID="ngModel" class="form-control" name="CategoryID" [(ngModel)]="product.categoryID">
+            <option value="">Select Category</option>
+            <option *ngFor="let category of categories" [value]="category.categoryID">
+                {{ category.name }}
+            </option>
+        </select>
+        <div *ngIf="CategoryID.invalid && (CategoryID.touched || CategoryID.dirty)">
+            <div class="text-danger" *ngIf="CategoryID.errors?.['required']">Category is required.</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Stock Quantity*</label>
+        <input required #StockQuantity="ngModel" class="form-control" type="number" name="StockQuantity" [(ngModel)]="product.stockQuantity"/>
+        <div *ngIf="StockQuantity.invalid && (StockQuantity.touched || StockQuantity.dirty)">
+            <div class="text-danger" *ngIf="StockQuantity.errors?.['required']">Stock Quantity is required.</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Price*</label>
+        <input required #Price="ngModel" class="form-control" type="number" name="Price" [(ngModel)]="product.price"/>
+        <div *ngIf="Price.invalid || priceError" class="text-danger">
+            <div *ngIf="Price.errors?.['required']">Price is required.</div>
+            <div *ngIf="priceError">Price must be greater than zero.</div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit" [disabled]="productForm.invalid">Add</button>
+</form>
+
