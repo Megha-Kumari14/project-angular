@@ -84,7 +84,7 @@ export class ProductFormComponent implements OnInit {
         if (exists) this.errorMessage = 'SKU already exists!';
       },
       error: () => {
-        this.errorMessage = 'Error checking SKU uniqueness.';
+        this.skuError = 'Error checking SKU uniqueness.';
       }
     });
   }
