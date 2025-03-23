@@ -76,6 +76,8 @@ export class ProductFormComponent implements OnInit {
   }
 
   checkSKU(): void {
+    this.skuError = ''; // Reset error before checking
+    if (!this.product.sku.trim()) return;
     this.productService.checkSKUExists(this.product.sku).subscribe({
       next: (exists) => {
         if (exists) this.errorMessage = 'SKU already exists!';
