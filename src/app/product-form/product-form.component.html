@@ -139,7 +139,10 @@
 
     <div class="mb-3">
         <label class="form-label">Category*</label>
-        <select required #CategoryID="ngModel" class="form-control" name="CategoryID" [(ngModel)]="product.categoryID">
+      
+         <select #CategoryID="ngModel" class="form-control" name="CategoryID" [(ngModel)]="product.categoryID" required [ngModelOptions]="{ updateOn: 'blur' }">
+
+        //<select required #CategoryID="ngModel" class="form-control" name="CategoryID" [(ngModel)]="product.categoryID">
             <option value="">Select Category</option>
             <option *ngFor="let category of categories" [value]="category.categoryID">
                 {{ category.name }}
@@ -152,7 +155,7 @@
 
     <div class="mb-3">
         <label class="form-label">Stock Quantity*</label>
-        <input required #StockQuantity="ngModel" class="form-control" type="number" name="StockQuantity" [(ngModel)]="product.stockQuantity"/>
+        <input required #StockQuantity="ngModel" class="form-control" type="number" name="StockQuantity" [(ngModel)]="product.stockQuantity" min="0"/>
         <div *ngIf="StockQuantity.invalid && (StockQuantity.touched || StockQuantity.dirty)">
             <div class="text-danger" *ngIf="StockQuantity.errors?.['required']">Stock Quantity is required.</div>
         </div>
@@ -160,7 +163,7 @@
 
     <div class="mb-3">
         <label class="form-label">Price*</label>
-        <input required #Price="ngModel" class="form-control" type="number" name="Price" [(ngModel)]="product.price"/>
+        <input required #Price="ngModel" class="form-control" type="number" name="Price" [(ngModel)]="product.price" min="0.01"/>
         <div *ngIf="Price.invalid || priceError" class="text-danger">
             <div *ngIf="Price.errors?.['required']">Price is required.</div>
             <div *ngIf="priceError">Price must be greater than zero.</div>
