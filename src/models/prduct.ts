@@ -1,19 +1,5 @@
-
-
-export interface Product{
-    ProductID: number;
-    Name: string;
-    Description: string;
-    SKU: number;
-    CategoryID: number;
-    StockQuantity: number;
-    Price: number;
-    Currency: string;
-
-}
-
 export interface Product
-{
+  {
     productID: number;
     name: string;
     description: string;
@@ -25,11 +11,10 @@ export interface Product
     currency: string;
     createdAt: Date;
     updatedAt: Date;
-}
+  }
 
-
-
-export interface Category {
+export interface Category 
+  {
     categoryID: number;
     name: string;
   }
