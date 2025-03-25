@@ -1,71 +1,5 @@
 1)ProductController.cs:
 
-// using Microsoft.AspNetCore.Mvc;
-// using ProductCatalogAPI.Models;
-// using ProductCatalogAPI.Services;
-
-
-// namespace ProductCatalogAPI.Controllers
-// {
-//     [Route("api/products")]
-//     [ApiController]
-//     public class ProductsController : ControllerBase
-//     {
-//         private readonly IProductService _productService;
-
-//         public ProductsController(IProductService productService)
-//         {
-//             _productService = productService;
-//         }
-
-//         // GET: api/products
-//         [HttpGet]
-//         public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
-//         {
-//             try
-//             {
-//                 var products = await _productService.GetAllProductsAsync();
-//                 return Ok(products);
-//             }
-//             catch (Exception ex)
-//             {
-//                 return StatusCode(500, $"Internal server error: {ex.Message}");
-//             }
-//         }
-
-//         // POST: api/products
-//         [HttpPost]
-//         //[Authorize(Roles = "Admin")]
-//         public async Task<ActionResult> CreateProduct([FromBody] ProductCreateDTO productCreateDTO)
-//         {
-//             if (productCreateDTO == null)
-//             {
-//                 return BadRequest("Product data is invalid.");
-//             }
-
-//             try
-//             {
-//                 // Call service layer to handle validation and adding product
-//                 var result = await _productService.AddProductAsync(productCreateDTO);
-
-//                 if (result.Success)
-//                 {
-//                     return CreatedAtAction(nameof(GetAllProducts), new { id = result.Product.ProductID }, result.Product);
-//                 }
-
-//                 return BadRequest(result.Message); // Return validation or error message
-//             }
-//             catch (Exception ex)
-//             {
-//                 return StatusCode(500, $"Internal server error: {ex.Message}");
-//             }
-//         }
-
-
-
-//     }
-// }
-
 using Microsoft.AspNetCore.Mvc;
 using ProductCatalogAPI.Models;
 using ProductCatalogAPI.Services;
@@ -83,14 +17,26 @@ namespace ProductCatalogAPI.Controllers
             _productService = productService;
         }
 
-        // GET: api/products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
+        public async Task<ActionResult<IEnumerable<ProductCreateDTO>>> GetAllProducts()
         {
             try
             {
                 var products = await _productService.GetAllProductsAsync();
-                return Ok(products);
+
+                var productDTOs = products.Select(p => new ProductCreateDTO
+                {
+                    ProductID = p.ProductID,
+                    Name = p.Name,
+                    Description = p.Description,
+                    SKU = p.SKU,
+                    CategoryID = p.CategoryID,
+                    StockQuantity = p.StockQuantity,
+                    Price = p.Price,
+                    Currency = p.Currency
+                });
+
+                return Ok(productDTOs);
             }
             catch (Exception ex)
             {
@@ -100,7 +46,6 @@ namespace ProductCatalogAPI.Controllers
 
         // POST: api/products
         [HttpPost]
-        //[Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateProduct([FromBody] ProductCreateDTO productCreateDTO)
         {
             if (productCreateDTO == null)
@@ -110,7 +55,12 @@ namespace ProductCatalogAPI.Controllers
 
             try
             {
-                // Call service layer to handle validation and adding product
+                bool isSkuUnique = await _productService.IsSkuUniqueAsync(productCreateDTO.SKU);
+                if (!isSkuUnique)
+                {
+                    return Conflict(new { message = "SKU already exists." });
+                }
+
                 var result = await _productService.AddProductAsync(productCreateDTO);
 
                 if (result.Success)
@@ -118,45 +68,20 @@ namespace ProductCatalogAPI.Controllers
                     return CreatedAtAction(nameof(GetAllProducts), new { id = result.Product.ProductID }, result.Product);
                 }
 
-                return BadRequest(result.Message); // Return validation or error message
+                return BadRequest(result.Message);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-
-        [HttpPost("check-sku")]
-        public async Task<IActionResult> CheckSku([FromBody] string sku)
-        {
-            if (string.IsNullOrEmpty(sku))
-            {
-                return BadRequest("SKU cannot be empty.");
-            }
-
-            bool isUnique = await _productService.IsSkuUniqueAsync(sku);
-
-            if (isUnique)
-            {
-                return Ok();  // SKU is unique
-            }
-
-            return Conflict("SKU already exists.");  // Return a conflict status if SKU exists
-        }
     }
 }
-
-
-
-
 
 2)CategoryController.cs:
 using Microsoft.AspNetCore.Mvc;
 using ProductCatalogAPI.Models;
 using ProductCatalogAPI.Services;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProductCatalogAPI.Controllers
 {
@@ -178,7 +103,7 @@ namespace ProductCatalogAPI.Controllers
             try
             {
                 var categories = await _categoryService.GetAllCategoriesAsync();
-                return Ok(categories); // 200 OK with the list of categories
+                return Ok(categories);
             }
             catch (Exception ex)
             {
@@ -199,12 +124,11 @@ namespace ProductCatalogAPI.Controllers
 
                 var newCategory = await _categoryService.AddCategoryAsync(category);
 
-                // Return a Created response with the URI of the newly created category
                 return CreatedAtAction(nameof(GetAllCategories), new { id = newCategory.CategoryID }, newCategory);
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return 400 if there's a validation error
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -213,8 +137,6 @@ namespace ProductCatalogAPI.Controllers
         }
     }
 }
-
-
 
 3)AppDbContext.cs:
           
@@ -229,7 +151,6 @@ namespace ProductCatalogAPI.Data
             : base(options)
         {
         }
-
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
 
@@ -237,15 +158,13 @@ namespace ProductCatalogAPI.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            //SKU is unique
             modelBuilder.Entity<Product>()
                 .HasIndex(p => p.SKU)
                 .IsUnique();
 
-            // one to many relationship between Product and Category
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(p => p.CategoryID)
                 .OnDelete(DeleteBehavior.Restrict);
         }
@@ -253,7 +172,7 @@ namespace ProductCatalogAPI.Data
 }
 
 4)Category.cs:
-using System;
+          
 using System.ComponentModel.DataAnnotations;
 
 namespace ProductCatalogAPI.Models
@@ -261,22 +180,15 @@ namespace ProductCatalogAPI.Models
     public class Category
     {
         [Key]
-        public int CategoryID { get; set; } // Primary Key 
+        public int CategoryID { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
-        //Navigation property for related products
-        public ICollection<Product> Products { get; set; }
     }
 }
 
-
-
-
-
 5)Product.cs:
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace ProductCatalogAPI.Models
@@ -288,18 +200,18 @@ namespace ProductCatalogAPI.Models
 
         [Required]
         [MaxLength(100, ErrorMessage = "Product name should not exceed 100 characters.")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Required]
         [RegularExpression(@"^[A-Za-z0-9_-]+$", ErrorMessage = "SKU can only contain alphanumeric characters (A-Z, a-z, 0-9), hyphen(-), and underscore(_)")]
-        public string SKU { get; set; }
+        public string? SKU { get; set; }
 
         [Required]
-        public int CategoryID { get; set; } // Foreign key
-        public Category? Category { get; set; } 
+        public int CategoryID { get; set; }
+        public Category? Category { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be less than zero.")]
         public int StockQuantity { get; set; }
@@ -309,7 +221,7 @@ namespace ProductCatalogAPI.Models
         public decimal Price { get; set; }
 
         [Required]
-        public string Currency { get; set; }
+        public string? Currency { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -322,16 +234,19 @@ namespace ProductCatalogAPI.Models
 {
     public class ProductCreateDTO
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string SKU { get; set; }
+        public int ProductID { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string? SKU { get; set; }
         public int CategoryID { get; set; }
         public int StockQuantity { get; set; }
         public decimal Price { get; set; }
-        public string Currency { get; set; }
+        public string? Currency { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }
-
 
 7)launchsettings.json:
 {
@@ -358,14 +273,10 @@ namespace ProductCatalogAPI.Models
   }
 }
 
-
 8)CategoryRepository.cs:
 using Microsoft.EntityFrameworkCore;
 using ProductCatalogAPI.Data;
 using ProductCatalogAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProductCatalogAPI.Repositories
 {
@@ -377,21 +288,15 @@ namespace ProductCatalogAPI.Repositories
         {
             _context = context;
         }
-
-        // Get a category by ID
         public async Task<Category> GetByIdAsync(int categoryId)
         {
-            return await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryID == categoryId);
+            return await _context.Categories.FirstOrDefaultAsync(c => c.CategoryID == categoryId);
         }
-
-        // Get all categories
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
             return await _context.Categories.ToListAsync();
         }
 
-        // Add a new category
         public async Task<Category> AddAsync(Category category)
         {
             await _context.Categories.AddAsync(category);
@@ -399,7 +304,6 @@ namespace ProductCatalogAPI.Repositories
             return category;
         }
 
-        // Save changes to the database
         public async Task<bool> SaveAsync()
         {
             var result = await _context.SaveChangesAsync();
@@ -409,27 +313,20 @@ namespace ProductCatalogAPI.Repositories
 }
 
 9)ICategoryRepository.cs:
-  using ProductCatalogAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
+using ProductCatalogAPI.Models;
 namespace ProductCatalogAPI.Repositories
 {
     public interface ICategoryRepository
     {
         Task<Category> GetByIdAsync(int categoryId);
         Task<IEnumerable<Category>> GetAllAsync();
-        Task<Category> AddAsync(Category category); // Add new category
+        Task<Category> AddAsync(Category category);
         Task<bool> SaveAsync();
     }
 }
 
 10)IProductRepository.cs:
-  using ProductCatalogAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using ProductCatalogAPI.Models;
 
 namespace ProductCatalogAPI.Repositories
 {
@@ -437,13 +334,13 @@ namespace ProductCatalogAPI.Repositories
     {
         Task<Product> AddAsync(Product product);
         Task<IEnumerable<Product>> GetAllAsync();
-        Task<bool> IsSkuUniqueAsync(string sku); // Check if SKU is unique
-        Task<bool> SaveAsync(); // Save changes to the database
+        Task<bool> IsSkuUniqueAsync(string sku); 
+        Task<bool> SaveAsync(); 
     }
 }
 
   11)ProductRepository.cs:
-  using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProductCatalogAPI.Data;
 using ProductCatalogAPI.Models;
 
@@ -458,42 +355,34 @@ namespace ProductCatalogAPI.Repositories
             _context = context;
         }
 
-        // Add a new product to the database
         public async Task<Product> AddAsync(Product product)
         {
             await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
-            return product; // Return the added product (can be useful for response)
+            return product; 
         }
 
-        // Get all products
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
             return await _context.Products.ToListAsync();
         }
 
-       // Implement the SKU uniqueness check
         public async Task<bool> IsSkuUniqueAsync(string sku)
         {
-            // Check if a product with the same SKU already exists
             return !await _context.Products.AnyAsync(p => p.SKU == sku);
         }
 
-        // Save changes to the database
         public async Task<bool> SaveAsync()
         {
             var saved = await _context.SaveChangesAsync();
-            return saved > 0; // Return true if any rows were affected
+            return saved > 0; 
         }
     }
 }
 
   12)CategoryServices.cs:
-  using ProductCatalogAPI.Models;
+using ProductCatalogAPI.Models;
 using ProductCatalogAPI.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProductCatalogAPI.Services
 {
@@ -506,62 +395,51 @@ namespace ProductCatalogAPI.Services
             _categoryRepository = categoryRepository;
         }
 
-        // Get a category by ID
         public async Task<Category> GetCategoryByIdAsync(int categoryId)
         {
             return await _categoryRepository.GetByIdAsync(categoryId);
         }
 
-        // Get all categories
         public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
         {
             return await _categoryRepository.GetAllAsync();
         }
 
-        // Add a new category
         public async Task<Category> AddCategoryAsync(Category category)
         {
-            // Business logic validation (you can extend this as needed)
             if (string.IsNullOrEmpty(category.Name))
             {
                 throw new ArgumentException("Category name cannot be empty.");
             }
 
-            // Add category via repository
             return await _categoryRepository.AddAsync(category);
         }
     }
 }
+
 13)ICategoryService.cs:
 
-  using ProductCatalogAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using ProductCatalogAPI.Models;
 
 namespace ProductCatalogAPI.Services
 {
     public interface ICategoryService
     {
-        Task<Category> GetCategoryByIdAsync(int categoryId); // Get a category by ID
-        Task<IEnumerable<Category>> GetAllCategoriesAsync(); // Get all categories
-        Task<Category> AddCategoryAsync(Category category); // Add a new category
+        Task<Category> GetCategoryByIdAsync(int categoryId); 
+        Task<IEnumerable<Category>> GetAllCategoriesAsync(); 
+        Task<Category> AddCategoryAsync(Category category); 
     }
 }
+
 14)IProductService.cs:
 
-  using ProductCatalogAPI.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
+using ProductCatalogAPI.Models;
 namespace ProductCatalogAPI.Services
 {
     public interface IProductService
     {
-        // Method to add a new product using ProductCreateDTO
         Task<ServiceResult> AddProductAsync(ProductCreateDTO productCreateDTO);
 
-        // Method to get all products
         Task<IEnumerable<Product>> GetAllProductsAsync();
 
         Task<bool> IsSkuUniqueAsync(string sku);
@@ -570,7 +448,7 @@ namespace ProductCatalogAPI.Services
 
   15)ProductService.cs:
 
-  using ProductCatalogAPI.Models;
+using ProductCatalogAPI.Models;
 using ProductCatalogAPI.Repositories;
 
 namespace ProductCatalogAPI.Services
@@ -584,19 +462,14 @@ namespace ProductCatalogAPI.Services
             _productRepository = productRepository;
         }
 
-        // Check if SKU is unique
         public async Task<bool> IsSkuUniqueAsync(string sku)
         {
             return await _productRepository.IsSkuUniqueAsync(sku);
         }
-
-        // Add a new product with validation and error handling
         public async Task<ServiceResult> AddProductAsync(ProductCreateDTO productCreateDTO)
         {
             try
             {
-
-                // Validate other properties of the DTO
                 if (string.IsNullOrEmpty(productCreateDTO.Name))
                 {
                     return new ServiceResult { Success = false, Message = "Product name is required." };
@@ -617,7 +490,12 @@ namespace ProductCatalogAPI.Services
                     return new ServiceResult { Success = false, Message = "Price must be greater than zero." };
                 }
 
-                // Map DTO to Product model
+                bool isSkuUnique = await IsSkuUniqueAsync(productCreateDTO.SKU);
+                if (!isSkuUnique)
+                {
+                    return new ServiceResult { Success = false, Message = "SKU already exists!" };
+                }
+
                 var product = new Product
                 {
                     Name = productCreateDTO.Name,
@@ -626,19 +504,18 @@ namespace ProductCatalogAPI.Services
                     CategoryID = productCreateDTO.CategoryID,
                     StockQuantity = productCreateDTO.StockQuantity,
                     Price = productCreateDTO.Price,
-                    Currency = "INR", // You might need to use productCreateDTO.Currency depending on your requirements
+                    Currency = "INR",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                // Save product to the database
                 var addedProduct = await _productRepository.AddAsync(product);
 
                 return new ServiceResult
                 {
                     Success = true,
                     Message = "Product added successfully.",
-                    Product = addedProduct // Return the created product
+                    Product = addedProduct
                 };
             }
             catch (Exception ex)
@@ -646,54 +523,47 @@ namespace ProductCatalogAPI.Services
                 return new ServiceResult
                 {
                     Success = false,
-                    Message = ex.Message // Return the exception message if any error occurs
+                    Message = ex.Message
                 };
             }
         }
-
-        // Get all products
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
             return await _productRepository.GetAllAsync();
         }
     }
 }
+
 16)Utility/ServiceResult.cs:
-  namespace ProductCatalogAPI.Models
+namespace ProductCatalogAPI.Models
 {
     public class ServiceResult
     {
         public bool Success { get; set; }
-        public string Message { get; set; }
-        public Product Product { get; set; } 
+        public string? Message { get; set; }
+        public Product? Product { get; set; } 
     }
 }
+
 17)Program.cs:
 
-  using Microsoft.EntityFrameworkCore;
-using ProductCatalogAPI.Models;
+using Microsoft.EntityFrameworkCore;
 using ProductCatalogAPI.Data;
 using ProductCatalogAPI.Repositories;
 using ProductCatalogAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Register the DbContext with SQL Server connection
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register the repositories and services
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-// Add controllers to the service container (move this up)
 builder.Services.AddControllers();
 
-// Register Swagger/OpenAPI services
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -718,29 +588,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Use CORS middleware
 app.UseCors("AllowCors");
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Product Management API V1");
-        c.RoutePrefix = string.Empty;  // This will serve the Swagger UI at the root of the application
+        c.RoutePrefix = string.Empty; 
     });
 }
 
 app.UseRouting();
 
-// Add endpoint routing for controllers
 app.MapControllers();
 
-// Enable HTTPS redirection
 app.UseHttpsRedirection();
 
-app.Run();  // Finally, run the app after configuring everything
-
-
-
+app.Run(); 
