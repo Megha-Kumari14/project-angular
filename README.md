@@ -26,3 +26,25 @@ RuleID (PK), ProductID (FK), MinThreshold, MaxThreshold, ReorderQuantity, Suppli
 Business Rules:
 Generate automatic reorder requests when stock falls below the MinThreshold
 Send notifications for out-of-stock items
+
+
+
+
+
+
+
+
+
+
+
+Minor correction in the requirement statement:
+
+Present:
+
+API Endpoint: POST /api/currencies
+
+ 
+
+New:
+
+API Endpoint: POST /api/cultures
