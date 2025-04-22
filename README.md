@@ -1,5 +1,5 @@
 # project-angular
-
+https://pmccommerce.udemy.com/organization/home/
 Manage Stock Movements
 User Story:
 As a store admin, I want to update stock levels when inventory is received, transferred, or sold so that stock data remains accurate.
